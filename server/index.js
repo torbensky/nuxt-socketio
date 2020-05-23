@@ -2,9 +2,37 @@ const express = require('express')
 const consola = require('consola')
 const { Nuxt, Builder } = require('nuxt')
 const app = express()
-
 // Import and Set Nuxt.js options
 const config = require('../nuxt.config.js')
+const session = require('./session')
+
+app.use((req, res, next) => {
+  const lastVisit = session.getState(req, 'LastVisit')
+  console.log('last visit was', lastVisit)
+
+  // Set the cookie to a value
+  session.setState(res, 'LastVisit', new Date().toISOString())
+  console.log('last visit was', lastVisit)
+
+  const UID = session.getState(req, 'UID')
+  if (!UID) {
+    const UID = Math.round(Math.random() * 100000000)
+    console.log('created UID for session', UID)
+    // WARNING: don't actually use this approach for creating UID's
+    // This is just for demonstration purposes.
+    session.setState(res, 'UID', UID)
+  } else {
+    console.log('request from user with existing sesssion', UID)
+  }
+
+  next()
+})
+
+app.post('/login', function(req, res, next) {
+  console.log('Request Type:', req.method)
+  res.send('HELLO')
+})
+
 config.dev = process.env.NODE_ENV !== 'production'
 
 async function start() {
